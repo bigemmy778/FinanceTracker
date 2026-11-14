@@ -6,8 +6,7 @@ function Onboarding() {
         <View className="flex-1 items-center jutify-center bg-background">
             <Text className="text-xl font-bold text-success">
               WElcome Felz is Onboarding
-            </Text>
-         
+            </Text> 
         </View>
     )
 }
