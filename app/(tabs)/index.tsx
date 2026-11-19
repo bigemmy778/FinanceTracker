@@ -3,7 +3,8 @@ import { Text, View, Image, FlatList } from "react-native";
 import { useState } from "react";
 import { Link } from "expo-router";
 import { styled } from "nativewind";
-import images from "@/constants/images";
+import UserAvatar from '@/components/UserAvatar'
+import { getDisplayName } from '@/lib/user'
 import { HOME_USER, HOME_BALANCE, UPCOMING_SUBSCRIPTIONS, HOME_SUBSCRIPTIONS } from "@/constants/data";
 import { icons } from "@/constants/icons";
 import { formatCurrency } from "@/lib/utils";
@@ -12,12 +13,15 @@ import dayjs from "dayjs";
 import ListHeading from "@/components/ListHeading";
 import UpcomingSubscriptionCard from "@/components/UpcomingSubscriptionCard";
 import SubscriptionCard from "@/lib/SubscriptionCard";
+import { useUser } from '@clerk/expo'
 
 const SafeAreaView = styled(RNSafeAreaView)
 
 export default function Home() {
     const [expandedSubscriptionId, setExpandedSubscriptionId] = useState<string | null>(null)
+    const { isLoaded, user } = useUser()
 
+    if (!isLoaded) return null
     return (
         <SafeAreaView className="flex-1 bg-background p-5">
 
@@ -27,8 +31,9 @@ export default function Home() {
                         {/* Avatar or Profile */}
                         <View className="home-header">
                             <View className="home-user">
-                                <Image source={images.avatar} className="home-avatar" />
-                                <Text className="home-user-name">{HOME_USER.name}</Text>
+                                {/* <Image source={images.avatar} className="home-avatar" /> */}
+                                <UserAvatar size={44} />
+                                <Text className="home-user-name">{getDisplayName(user)}</Text>
                             </View>
 
                             <Image source={icons.add} style={{}}
@@ -66,7 +71,7 @@ export default function Home() {
 
                         </View>
 
-                        <ListHeading title="All Subscription" />
+                        <ListHeading title="All Subscriptions" />
                     </>
                 )}
                 data={HOME_SUBSCRIPTIONS}

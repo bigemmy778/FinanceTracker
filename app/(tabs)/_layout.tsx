@@ -5,6 +5,7 @@ import { colors, components } from "@/constants/theme";
 import { Image } from "react-native"
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { ImageSourcePropType } from 'react-native'
 
 const tabBar = components.tabBar
 
@@ -15,7 +16,7 @@ const TabLayout = () => {
 
     interface TabIconProps {
         focused: boolean;
-        icon: ImageSource;
+        icon: ImageSourcePropType;
     }
 
     const TabIcon = ({ focused, icon }: TabIconProps) => {
