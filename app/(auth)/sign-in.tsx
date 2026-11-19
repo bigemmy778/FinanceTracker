@@ -7,6 +7,8 @@ import AuthField from '@/components/auth/AuthField'
 import AuthButton from '@/components/auth/AuthButton'
 import { authColors, authFonts } from '@/constants/authTheme'
 import { isValidEmail, parseClerkError } from '@/lib/clerk-errors'
+import { posthog } from '@/lib/posthog'
+import { posthogLogger } from '@/lib/posthog-logger'
 import type { AuthFormErrors } from '@/types/auth'
 
 export default function SignInScreen() {
@@ -36,6 +38,11 @@ export default function SignInScreen() {
     const { error } = await signIn.finalize({
       navigate: ({ session, decorateUrl }) => {
         if (session?.currentTask) return
+        posthog?.capture('user_signed_in')
+        posthogLogger.info('authentication completed', {
+          event: 'authentication_completed',
+          auth_flow: 'sign_in',
+        })
         const url = decorateUrl('/(tabs)')
         if (url.startsWith('http')) window.location.href = url
         else router.replace(url as Href)

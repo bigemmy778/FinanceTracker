@@ -1,9 +1,11 @@
 import "@/global.css";
 import { SplashScreen, Stack } from "expo-router";
 import { useFonts } from "expo-font";
-import { useEffect } from "react";
-import { ClerkProvider, useAuth } from "@clerk/expo";
+import { useEffect, useRef } from "react";
+import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
+import { PostHogProvider } from "posthog-react-native";
+import { posthog } from "@/lib/posthog";
 
 // Keep the splash screen up until fonts and auth state are ready
 SplashScreen.preventAutoHideAsync();
@@ -16,6 +18,8 @@ if (!publishableKey) {
 
 function RootNavigator() {
   const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded: isUserLoaded, user } = useUser();
+  const identifiedUserId = useRef<string | undefined>(undefined);
 
   const [fontsLoaded, fontError] = useFonts({
     "sans-regular": require("../assets/fonts/PlusJakartaSans-Regular.ttf"),
@@ -40,6 +44,30 @@ function RootNavigator() {
     if (ready) SplashScreen.hideAsync();
   }, [ready]);
 
+  useEffect(() => {
+    if (!isUserLoaded || !posthog) return;
+
+    if (!user) {
+      identifiedUserId.current = undefined;
+      return;
+    }
+
+    if (identifiedUserId.current === user.id) return;
+
+    const email = user.primaryEmailAddress?.emailAddress;
+    const name = user.fullName;
+    const username = user.username;
+
+    posthog.identify(user.id, {
+      $set: {
+        ...(email ? { email } : {}),
+        ...(name ? { name } : {}),
+        ...(username ? { username } : {}),
+      },
+    });
+    identifiedUserId.current = user.id;
+  }, [isUserLoaded, user]);
+
   if (!ready) return null;
 
   return (
@@ -58,9 +86,15 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
+  const navigator = <RootNavigator />;
+
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <RootNavigator />
+      {posthog ? (
+        <PostHogProvider client={posthog}>{navigator}</PostHogProvider>
+      ) : (
+        navigator
+      )}
     </ClerkProvider>
   );
 }

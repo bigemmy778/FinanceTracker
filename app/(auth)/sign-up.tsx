@@ -7,6 +7,8 @@ import AuthField from '@/components/auth/AuthField'
 import AuthButton from '@/components/auth/AuthButton'
 import { authColors, authFonts } from '@/constants/authTheme'
 import { isValidEmail, parseClerkError } from '@/lib/clerk-errors'
+import { posthog } from '@/lib/posthog'
+import { posthogLogger } from '@/lib/posthog-logger'
 import type { AuthFormErrors, VerificationStep } from '@/types/auth'
 
 export default function SignUpScreen() {
@@ -44,6 +46,11 @@ export default function SignUpScreen() {
     const res = await signUp.finalize({
       navigate: ({ session, decorateUrl }) => {
         if (session?.currentTask) return
+        posthog?.capture('account_created')
+        posthogLogger.info('authentication completed', {
+          event: 'authentication_completed',
+          auth_flow: 'sign_up',
+        })
         const url = decorateUrl('/(tabs)')
         if (url.startsWith('http')) window.location.href = url
         else router.replace(url as Href)

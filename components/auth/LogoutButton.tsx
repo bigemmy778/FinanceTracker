@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { ActivityIndicator, Alert, Platform, Pressable, Text } from 'react-native'
 import { useClerk } from '@clerk/expo'
+import { posthog } from '@/lib/posthog'
+import { posthogLogger } from '@/lib/posthog-logger'
 import { authColors, authFonts } from '@/constants/authTheme'
 
 export default function LogoutButton() {
@@ -11,6 +13,12 @@ export default function LogoutButton() {
     try {
       setLoading(true)
       await signOut() // route guards send the user back to the auth screens
+      posthog?.capture('user_signed_out')
+      posthogLogger.info('authentication completed', {
+        event: 'authentication_completed',
+        auth_flow: 'sign_out',
+      })
+      posthog?.reset()
     } catch (e) {
       console.error('Sign out failed:', e)
       setLoading(false)

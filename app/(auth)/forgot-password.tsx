@@ -7,6 +7,8 @@ import AuthField from '@/components/auth/AuthField'
 import AuthButton from '@/components/auth/AuthButton'
 import { authColors, authFonts } from '@/constants/authTheme'
 import { isValidEmail, parseClerkError } from '@/lib/clerk-errors'
+import { posthog } from '@/lib/posthog'
+import { posthogLogger } from '@/lib/posthog-logger'
 import type { AuthFormErrors, ResetStep } from '@/types/auth'
 
 const GENERIC_CODE_ERROR = 'That code is invalid or has expired. Please try again.'
@@ -96,6 +98,11 @@ export default function ForgotPasswordScreen() {
     if (error) return setErrors({ password: parseClerkError(error).message })
 
     setResetDone(true)
+    posthog?.capture('password_reset_completed')
+    posthogLogger.info('authentication completed', {
+      event: 'authentication_completed',
+      auth_flow: 'password_reset',
+    })
     if (signIn.status === 'complete') await activate()
     else setErrors({ form: 'Extra verification is required that this app does not support yet.' })
   }
