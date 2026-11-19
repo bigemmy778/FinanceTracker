@@ -5,7 +5,6 @@ import { Link } from "expo-router";
 import { styled } from "nativewind";
 import UserAvatar from '@/components/UserAvatar'
 import { getDisplayName } from '@/lib/user'
-import images from "@/constants/images";
 import { HOME_USER, HOME_BALANCE, UPCOMING_SUBSCRIPTIONS, HOME_SUBSCRIPTIONS } from "@/constants/data";
 import { icons } from "@/constants/icons";
 import { formatCurrency } from "@/lib/utils";

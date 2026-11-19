@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ActivityIndicator, Alert, Pressable, Text } from 'react-native'
+import { ActivityIndicator, Alert, Platform, Pressable, Text } from 'react-native'
 import { useClerk } from '@clerk/expo'
 import { authColors, authFonts } from '@/constants/authTheme'
 
@@ -7,22 +7,25 @@ export default function LogoutButton() {
   const { signOut } = useClerk()
   const [loading, setLoading] = useState(false)
 
+  const doSignOut = async () => {
+    try {
+      setLoading(true)
+      await signOut() // route guards send the user back to the auth screens
+    } catch (e) {
+      console.error('Sign out failed:', e)
+      setLoading(false)
+    }
+  }
+
   const confirmLogout = () => {
+    // Alert.alert shows nothing on web, so use the browser's confirm there
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to sign out?')) doSignOut()
+      return
+    }
     Alert.alert('Sign out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign out',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            setLoading(true)
-            await signOut() // route guards send the user back to the auth screens
-          } catch (e) {
-            console.error('Sign out failed:', e)
-            setLoading(false)
-          }
-        },
-      },
+      { text: 'Sign out', style: 'destructive', onPress: doSignOut },
     ])
   }
 

@@ -10,7 +10,7 @@ export type AuthFormErrors = {
     form?: string
 }
 
-export type VerificationStep = 'credentials' | 'verify' | 'verifyPhone' | 'details'
+export type VerificationStep = 'credentials' | 'verify' | 'details'
 
 export type ResetStep = 'email' | 'code' | 'password'
 

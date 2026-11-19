@@ -1,4 +1,5 @@
-import { Image, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
+import { Image } from 'expo-image'
 import { useUser } from '@clerk/expo'
 import { authColors, authFonts } from '@/constants/authTheme'
 import { getDisplayName } from '@/lib/user'
@@ -13,6 +14,8 @@ export default function UserAvatar({ size = 44 }: { size?: number }) {
       <Image
         source={{ uri: user.imageUrl }}
         style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#E5E5E5' }}
+        contentFit="cover"
+        cachePolicy="memory-disk"
       />
     )
   }
