@@ -14,12 +14,20 @@ import ListHeading from "@/components/ListHeading";
 import UpcomingSubscriptionCard from "@/components/UpcomingSubscriptionCard";
 import SubscriptionCard from "@/lib/SubscriptionCard";
 import { useUser } from '@clerk/expo'
+import { usePostHog } from 'posthog-react-native'
 
 const SafeAreaView = styled(RNSafeAreaView)
 
 export default function Home() {
     const [expandedSubscriptionId, setExpandedSubscriptionId] = useState<string | null>(null)
     const { isLoaded, user } = useUser()
+    const posthog = usePostHog()
+
+    const handleSubscriptionPress = (subscriptionId: string) => {
+        const action = expandedSubscriptionId === subscriptionId ? 'collapsed' : 'expanded'
+        posthog?.capture('subscription_details_toggled', { action })
+        setExpandedSubscriptionId(action === 'expanded' ? subscriptionId : null)
+    }
 
     if (!isLoaded) return null
     return (
@@ -79,8 +87,7 @@ export default function Home() {
                 renderItem={({ item }) => (
                     <SubscriptionCard
                         {...item} expanded={expandedSubscriptionId === item.id}
-                        onPress={() => setExpandedSubscriptionId((currentId) =>
-                            (currentId === item.id ? null : item.id))}
+                        onPress={() => handleSubscriptionPress(item.id)}
                     />
                 )}
                 extraData={expandedSubscriptionId}
