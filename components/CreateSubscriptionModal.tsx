@@ -12,6 +12,7 @@ import {
 import clsx from "clsx";
 import dayjs from "dayjs";
 import { icons } from "@/constants/icons";
+import { posthog } from "@/lib/posthog";
 
 export const SUBSCRIPTION_CATEGORIES = [
   "Entertainment",
@@ -113,6 +114,13 @@ export default function CreateSubscriptionModal({
       icon: icons.wallet,
       color: CATEGORY_COLORS[category],
     };
+
+    posthog?.capture("subscription_created", {
+        subscription_name: trimmedName,
+        subscription_price: Number(parsedPrice.toFixed(2)),
+        subscription_frequency: frequency,
+        subscription_category: category,
+      });
 
     onCreate(newSubscription);
     resetForm();
