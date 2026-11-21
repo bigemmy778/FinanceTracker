@@ -70,7 +70,7 @@ export default function Subscriptions() {
         }}
       >
         <RoundButton label="‹" onPress={goBack} />
-        <Text style={{ fontFamily: authFonts.extrabold, fontSize: 20, color: authColors.primary }}>
+        <Text style={{ fontFamily: authFonts.bold, fontSize: 18, color: authColors.primary }}>
           My Subscriptions
         </Text>
         <RoundButton label="•••" />

@@ -7,6 +7,7 @@ type SubscriptionItem = (typeof HOME_SUBSCRIPTIONS)[number];
 interface SubscriptionsContextValue {
   subscriptions: SubscriptionItem[];
   addSubscription: (newSub: NewSubscriptionInput) => void;
+  cancelSubscription: (id: string) => void;
 }
 
 const SubscriptionsContext = createContext<SubscriptionsContextValue | null>(
@@ -21,8 +22,14 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
     setSubscriptions((prev) => [newSub as SubscriptionItem, ...prev]);
   };
 
+  const cancelSubscription = (id: string) => {
+    setSubscriptions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, status: "cancelled" } : s))
+    );
+  };
+
   return (
-    <SubscriptionsContext.Provider value={{ subscriptions, addSubscription }}>
+    <SubscriptionsContext.Provider value={{ subscriptions, addSubscription, cancelSubscription }}>
       {children}
     </SubscriptionsContext.Provider>
   );
