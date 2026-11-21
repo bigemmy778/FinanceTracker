@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { type Href, Link, useRouter } from 'expo-router'
 import { useSignIn } from '@clerk/expo'
+import { usePostHog } from 'posthog-react-native'
 import AuthLayout from '@/components/auth/AuthLayout'
 import AuthField from '@/components/auth/AuthField'
 import AuthButton from '@/components/auth/AuthButton'
@@ -12,6 +13,7 @@ import type { AuthFormErrors } from '@/types/auth'
 export default function SignInScreen() {
   const { signIn, fetchStatus } = useSignIn()
   const router = useRouter()
+  const posthog = usePostHog()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -42,6 +44,7 @@ export default function SignInScreen() {
       },
     })
     if (error) setErrors({ form: parseClerkError(error).message })
+    else posthog?.capture('user_signed_in')
   }
 
   const handleSignIn = async () => {

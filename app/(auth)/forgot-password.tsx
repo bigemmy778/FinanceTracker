@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { Pressable, Text } from 'react-native'
 import { type Href, Link, useRouter } from 'expo-router'
 import { useSignIn } from '@clerk/expo'
+import { usePostHog } from 'posthog-react-native'
 import AuthLayout from '@/components/auth/AuthLayout'
 import AuthField from '@/components/auth/AuthField'
 import AuthButton from '@/components/auth/AuthButton'
 import { authColors, authFonts } from '@/constants/authTheme'
 import { isValidEmail, parseClerkError } from '@/lib/clerk-errors'
+import { posthogLogger } from '@/lib/posthog'
 import type { AuthFormErrors, ResetStep } from '@/types/auth'
 
 const GENERIC_CODE_ERROR = 'That code is invalid or has expired. Please try again.'
@@ -14,6 +16,7 @@ const GENERIC_CODE_ERROR = 'That code is invalid or has expired. Please try agai
 export default function ForgotPasswordScreen() {
   const { signIn, fetchStatus } = useSignIn()
   const router = useRouter()
+  const posthog = usePostHog()
 
   const [step, setStep] = useState<ResetStep>('email')
   const [email, setEmail] = useState('')
@@ -95,6 +98,11 @@ export default function ForgotPasswordScreen() {
     })
     if (error) return setErrors({ password: parseClerkError(error).message })
 
+    posthog?.capture('password_reset_completed')
+    posthogLogger.info('password reset completed', {
+      workflow: 'password_reset',
+      outcome: 'completed',
+    })
     setResetDone(true)
     if (signIn.status === 'complete') await activate()
     else setErrors({ form: 'Extra verification is required that this app does not support yet.' })

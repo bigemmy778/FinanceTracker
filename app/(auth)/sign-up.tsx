@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { type Href, Link, useRouter } from 'expo-router'
 import { useSignUp } from '@clerk/expo'
+import { usePostHog } from 'posthog-react-native'
 import AuthLayout from '@/components/auth/AuthLayout'
 import AuthField from '@/components/auth/AuthField'
 import AuthButton from '@/components/auth/AuthButton'
@@ -12,6 +13,7 @@ import type { AuthFormErrors, VerificationStep } from '@/types/auth'
 export default function SignUpScreen() {
   const { signUp, fetchStatus } = useSignUp()
   const router = useRouter()
+  const posthog = usePostHog()
 
   const [step, setStep] = useState<VerificationStep>('credentials')
   const [email, setEmail] = useState('')
@@ -49,6 +51,7 @@ export default function SignUpScreen() {
         else router.replace(url as Href)
       },
     })
+    if (!res?.error) posthog?.capture('user_signed_up')
     return res?.error
   }
 
