@@ -4,7 +4,7 @@ import { styled } from 'nativewind'
 import { SafeAreaView as RNSafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import dayjs from 'dayjs'
-import { HOME_SUBSCRIPTIONS } from '@/constants/data'
+import { useSubscriptions } from '@/context/SubscriptionsContext'
 import { authColors, authFonts } from '@/constants/authTheme'
 import { formatCurrency } from '@/lib/utils'
 
@@ -13,22 +13,36 @@ const SafeAreaView = styled(RNSafeAreaView)
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const CHART_H = 140
 const TOOLTIP_H = 30
+
 const PANEL_BG = 'rgba(8,17,38,0.05)'
+
+
+// Next renewal on or after today, stepping forward by the billing period
+function nextRenewal(s: Subscription) {
+  const today = dayjs().startOf('day')
+  const unit = s.billing?.toLowerCase() === 'yearly' ? 'year' : 'month'
+  let next = dayjs(s.renewalDate)
+  if (next.isBefore(today)) {
+    next = next.add(Math.ceil(today.diff(next, unit, true)), unit)
+    if (next.isBefore(today)) next = next.add(1, unit)
+  }
+  return next
+}
 
 function RoundButton({ label, onPress }: { label: string; onPress?: () => void }) {
   return (
     <Pressable
-    onPress={onPress}
-    style={({ pressed }) => ({
-      width: 40,
-      height: 40,
-      borderRadius: 22,
-      borderWidth: 1,
-      borderColor: authColors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-      opacity: pressed ? 0.7 : 1,
-    })}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        width: 40,
+        height: 40,
+        borderRadius: 22,
+        borderWidth: 1,
+        borderColor: authColors.border,
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: pressed ? 0.7 : 1,
+      })}
     >
       <Text style={{ fontFamily: authFonts.bold, fontSize: 13, color: authColors.primary }}>{label}</Text>
     </Pressable>
@@ -115,14 +129,20 @@ export default function Insights() {
   const router = useRouter()
   const [selected, setSelected] = useState<number | null>(null)
 
-  const { weekly, niceMax, ticks, peakIdx, monthlyTotal, history } = useMemo(() => {
-    const active = HOME_SUBSCRIPTIONS.filter((s) => s.status === 'active')
+  const { subscriptions } = useSubscriptions()
 
-    // Money renewing on each weekday (Mon..Sun)
+  const { weekly, niceMax, ticks, peakIdx, monthlyTotal, history } = useMemo(() => {
+    const active = subscriptions.filter((s) => s.status === 'active')
+
+    // Only renewals in the next 7 days, grouped by weekday (Mon..Sun)
+    const today = dayjs().startOf('day')
+    const windowEnd = today.add(7, 'day')
+
     const weekly = DAYS.map(() => 0)
     active.forEach((s) => {
-      const idx = (dayjs(s.renewalDate).day() + 6) % 7
-      weekly[idx] += s.price
+      const next = nextRenewal(s)
+      if (next.isBefore(today) || !next.isBefore(windowEnd)) return
+      weekly[(next.day() + 6) % 7] += s.price
     })
 
     const max = Math.max(...weekly, 0)
@@ -136,12 +156,12 @@ export default function Insights() {
       0,
     )
 
-    const history = [...HOME_SUBSCRIPTIONS].sort(
+    const history = [...subscriptions].sort(
       (a, b) => dayjs(b.renewalDate).valueOf() - dayjs(a.renewalDate).valueOf(),
     )
 
     return { weekly, niceMax, ticks, peakIdx, monthlyTotal, history }
-  }, [])
+  }, [subscriptions])
 
   const activeIdx = selected ?? peakIdx
 
@@ -163,11 +183,11 @@ export default function Insights() {
             marginBottom: 24,
           }}
         >
-          <RoundButton label="‹" onPress={goBack}  />
+          <RoundButton label="‹" onPress={goBack} />
           <Text style={{ fontFamily: authFonts.bold, fontSize: 18, color: authColors.primary }}>
             Monthly Insights
           </Text>
-          <RoundButton label="•••"  />
+          <RoundButton label="•••" />
         </View>
 
         {/* Upcoming chart */}
@@ -218,7 +238,7 @@ export default function Insights() {
                           <Text
                             style={{ fontFamily: authFonts.bold, fontSize: 11, color: authColors.accent }}
                           >
-                            ${Math.round(value)}
+                            {formatCurrency(value, 'USD')}
                           </Text>
                         </View>
                       )}
